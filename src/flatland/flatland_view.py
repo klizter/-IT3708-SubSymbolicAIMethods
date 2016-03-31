@@ -182,7 +182,7 @@ class FlatlandView(Tk):
         else:
             self.first_draw = False
 
-        self.after(1000, self.run_time_step)
+        self.after(self.time_step_delay.get(), self.run_time_step)
 
     def change_scenario(self):
         if self.current_scenario + 1 < len(self.flatland_scenarios):
@@ -208,12 +208,4 @@ class FlatlandView(Tk):
 
         self.draw_grid_content()
 
-        self.after(self.time_step_delay.get(), self.agenda_loop)
-
-
-# from genotype_neural_network_weights import GenotypeNeuralNetworkWeights
-# flatland = [Flatland(10, [0, 0, Direction.SOUTH])]
-# genotype_agent = GenotypeNeuralNetworkWeights.construct_random_genotype()
-# view = FlatlandView(flatland, genotype_agent, 60)
-# view.after(20, view.agenda_loop())
-# view.mainloop()
+        self.after(30, self.agenda_loop)

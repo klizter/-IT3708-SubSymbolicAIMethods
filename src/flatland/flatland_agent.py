@@ -8,6 +8,7 @@ class FlatlandAgent:
 
     def __init__(self, ann):
         self.ann = ann
+        self.actions = [Move.FORWARD, Move.LEFT, Move.RIGHT]
 
     def choose_action(self, cells):
 
@@ -25,7 +26,7 @@ class FlatlandAgent:
         # Stand still if non of the outputs are higher the action threshold
         action = Move.STAND_STILL
         if max_action_value > self.__class__.action_threshold:
-            action = Move(index + 1)
+            action = self.actions[index]
 
         return action
 

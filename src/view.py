@@ -10,8 +10,9 @@ from suprising_sequence.fitness_locally_suprising_sequence import FitnessLocally
 from suprising_sequence.genotype_suprising_sequence import GenotypeSuprisingSequence
 from flatland.fitness_flatland_agent import FitnessFlatlandAgent
 from flatland.genotype_neural_network_weights import GenotypeNeuralNetworkWeights
+from beer_tracker.genotype_ctrnn import GenotypeCTRNNWeights
+from beer_tracker.fitness_beer_tracker_agent import FitnessBeerTrackerAgent
 from plot_evolution import PlotEvolution
-from multiprocessing.pool import ThreadPool
 from flatland.flatland_view import FlatlandView
 
 
@@ -21,21 +22,22 @@ class View(Tk):
         Tk.__init__(self, *args, **kwargs)
 
         self.title("EA Configuration Panel")
-        self.thread_pool = ThreadPool(processes=20)
 
         # Available Genotypes Classes
         self.genotype_classes = {1: Genotype,
                                  2: GenotypeLOLZPrefix,
                                  3: GenotypeSuprisingSequence,
                                  4: GenotypeSuprisingSequence,
-                                 5: GenotypeNeuralNetworkWeights}
+                                 5: GenotypeNeuralNetworkWeights,
+                                 6: GenotypeCTRNNWeights}
 
         # Available Fitness Classes
         self.fitness_classes = {1: FitnessOneMax,
                                 2: FitnessLOLZPrefix,
                                 3: FitnessGloballySuprisingSequence,
                                 4: FitnessLocallySuprisingSequence,
-                                5: FitnessFlatlandAgent}
+                                5: FitnessFlatlandAgent,
+                                6: FitnessBeerTrackerAgent}
 
         # GUI State variables
         self.child_pool_size = IntVar(self, EA.child_pool_size)
@@ -133,7 +135,9 @@ class View(Tk):
         Radiobutton(self, text="Locally SS",
                     variable=self.problem_selected, value=4).grid(row=12, column=3)
         Radiobutton(self, text="Flatland",
-                    variable=self.problem_selected, value=5).grid(row=12, column=4, pady=20)
+                    variable=self.problem_selected, value=5).grid(row=12, column=4)
+        Radiobutton(self, text="Beer Tracker",
+                    variable=self.problem_selected, value=6).grid(row=12, column=5, pady=20)
 
         Label(self, text="ONE-MAX Settings").grid(row=13, column=0, pady=12)
 
@@ -172,13 +176,20 @@ class View(Tk):
         Checkbutton(self, text="Dynamic", variable=self.flatland_dynamic_scenarios,
                     onvalue=1, offvalue=0, height=2, width=20).grid(row=17, column=5)
 
-        Label(self, text="Runtime Configurations").grid(row=18, columnspan=6, pady=20)
+        Label(self, text="Beer Tracker Settings").grid(row=17, column=0, pady=12)
 
-        Button(self, text="Start EA", width=25, command=self.load_ea).grid(row=19, column=0, pady=20, padx=20)
+        Checkbutton(self, text="Pulling", variable=self.beer_tracker_pulling,
+                    onvalue=1, offvalue=0, height=2, width=20).grid(row=18, column=1)
+        Checkbutton(self, text="Wrap", variable=self.beer_tracker_world_wrap,
+                    onvalue=1, offvalue=0, height=2, width=20).grid(row=18, column=2)
+
+        Label(self, text="Runtime Configurations").grid(row=19, columnspan=6, pady=20)
+
+        Button(self, text="Start EA", width=25, command=self.load_ea).grid(row=20, column=0, pady=20, padx=20)
         Checkbutton(self, text="Aggregated plotting", variable=self.aggregate_plot_data,
-                    onvalue=1, offvalue=0, height=5, width=20).grid(row=19, column=3)
-        Label(self, text="Accumulations: ").grid(row=19, column=4)
-        Entry(self, textvariable=self.accumulation_bound).grid(row=19, column=5, padx=20)
+                    onvalue=1, offvalue=0, height=5, width=20).grid(row=20, column=3)
+        Label(self, text="Accumulations: ").grid(row=20, column=4)
+        Entry(self, textvariable=self.accumulation_bound).grid(row=20, column=5, padx=20)
 
     # Configure EA meta settings before
     def load_ea(self):
@@ -191,9 +202,9 @@ class View(Tk):
         self.run_ea()
 
     def run_ea(self):
-        current_iteration = 1
+        iterations_completed = 0
         PlotEvolution.x_limit = self.maximum_generations.get()
-        while self.ea_iterations >= current_iteration:
+        while self.ea_iterations != iterations_completed:
 
             ea_config = EAConfig(self.child_pool_size.get(),
                                  self.adult_pool_size.get(),
@@ -237,11 +248,6 @@ class View(Tk):
             genotype_class.report_genotype_settings()
             ea_config.report()
 
-            # If flatland, run simulation
-            if self.problem_selected.get() == 5:
-                view = FlatlandView(fitness_class.flatland_scenarios, solution, self.flatland_time_steps.get())
-                view.after(20, view.agenda_loop())
-                view.mainloop()
 
             # Plot aggregated data
             if self.aggregate_plot_data.get() == 1:
@@ -263,7 +269,13 @@ class View(Tk):
                                              ea.gen_best_fitness,
                                              ea.gen_standard_deviation)
 
-            current_iteration += 1
+            # If flatland, run simulation
+            if self.problem_selected.get() == 5:
+                view = FlatlandView(fitness_class.flatland_scenarios, solution, self.flatland_time_steps.get())
+                view.after(20, view.agenda_loop())
+                view.mainloop()
+
+            iterations_completed += 1
 
 view = View()
 view.lift()

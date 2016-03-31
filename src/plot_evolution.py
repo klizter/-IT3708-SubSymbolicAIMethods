@@ -26,6 +26,7 @@ class PlotEvolution:
         plt.plot(generations, best_fitness, linewidth=1.5, color="red", linestyle="solid")
         plt.plot(generations, standard_deviation, linewidth=1.5, color="blue", linestyle="solid")
 
+        plt.draw()
         plt.show()
 
     @classmethod

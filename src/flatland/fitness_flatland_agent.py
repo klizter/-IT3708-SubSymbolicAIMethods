@@ -86,8 +86,5 @@ class FitnessFlatlandAgent(Fitness):
             cls.flatland_scenarios.append(Flatland(10, cls.agent_start))
 
     @classmethod
-    # TODO: Review function, might need better distinction between 0 food, and 0 food with k poisons
     def fitness_function(cls, foods, poisons):
-        if foods == 0:
-            return 0.0
         return (foods / float(cls.max_foods)) / float(1 + (poisons * 0.5))
