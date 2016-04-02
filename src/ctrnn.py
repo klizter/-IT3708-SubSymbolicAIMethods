@@ -1,5 +1,4 @@
-__author__ = 'ocselvig'
-from numpy import exp, dot, power, sin, append, array
+from numpy import exp, dot, power, sin, concatenate, array
 from enum import Enum
 
 
@@ -26,25 +25,22 @@ class ContinuesTimeRecurrentNeuralNetwork:
             # Add recurrent and bias signals to downstream iff CTRNN layer
             if layer.is_continues_time_recurrent():
 
-                # TODO: Sigmodal/Logistic function for internal state
                 recurrent_signals = []
-                for neuron in layer.neuros:
+                for neuron in layer.neurons:
                     recurrent_signals.append(neuron.memory*neuron.gain_term)
 
-                recurrent_signals = NeuronLayer.logistic(array(recurrent_signals))
-
-                append(downstream_signals, recurrent_signals) # HVA FAEN I HELVETE?
-
-                append(downstream_signals, [1]) # TODO: if something goes wrong, check this!
+                # Add recurrent signals and bias signal to downstream signals
+                recurrent_signals_array = NeuronLayer.logistic(array(recurrent_signals))
+                downstream_signals = concatenate([downstream_signals, recurrent_signals_array])
+                downstream_signals = concatenate([downstream_signals, [1.0]])
 
             # Potentially fire each neuron in layer
             downstream_signals = layer.activation_function(dot(downstream_signals, layer.weights))
 
             # Calculate derivative for each neuron and apply to memory state iff CTRNN layer
             if layer.is_continues_time_recurrent():
-
-                for i in xrange(len(layer.neuros)):
-                    layer.neuros[i].calculate_derivative(downstream_signals[i])
+                for i in xrange(len(layer.neurons)):
+                    layer.neurons[i].calculate_derivative(downstream_signals[i])
 
         # return last neural layer's downstream as output
         return downstream_signals
@@ -61,7 +57,7 @@ class ContinuesTimeRecurrentNeuralNetwork:
         for i in xrange(len(layer_weights)):
 
             # Construct layer neurons
-            layer_neurons = [NeuronCTRNN(gain_terms[j], time_constants[j]) for j in xrange(len(gain_terms))]
+            layer_neurons = [NeuronCTRNN(gain_terms[i][j], time_constants[i][j]) for j in xrange(len(gain_terms[i]))]
 
             # Construct the layer
             neuron_layer = NeuronLayer(layer_weights[i], activation_schemes[i], layer_neurons)
@@ -132,7 +128,8 @@ class NeuronCTRNN(Neuron):
         self.memory = 0
 
     def calculate_derivative(self, signal):
-        self.memory += (1 / self.time_constant) * ((-self.memory) + signal)
+        leak_term =  (1 / self.time_constant)
+        self.memory += leak_term * (signal - self.memory)
 
     @classmethod
     def generate_neurons(cls, time_constants, gain_terms):

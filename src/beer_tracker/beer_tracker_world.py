@@ -40,24 +40,27 @@ class BeerTrackerObject:
     def move_horizontally(self, units):
         cls = self.__class__
         x_proposed = self.x + units
+        x = 0
 
         if cls.wrap:
 
             if x_proposed > cls.x_max:
-                self.x = x_proposed - cls.x_max
+                x = x_proposed - cls.x_max
             elif x_proposed < 1:
-                self.x = cls.x_max - x_proposed
+                x = cls.x_max - x_proposed
             else:
-                self.x = x_proposed
+                x = x_proposed
 
         else:
 
             if x_proposed > cls.x_max:
-                self.x = cls.x_max
+                x = cls.x_max
             elif x_proposed < 1:
-                self.x = 1
+                x = 1
             else:
-                self.x = x_proposed
+                x = x_proposed
+
+        self.x = int(x)
 
     # Return all units occupied by object
     def get_unpacked(self):
@@ -78,7 +81,8 @@ class BeerTrackerWorld:
         BeerTrackerObject.wrap = wrap
 
         self.tracker = BeerTrackerObject(tracker_x, max_y, 5)
-        self.falling_object = self.generate_falling_object()
+        self.falling_object = None
+        self.generate_falling_object()
 
     # Generate new falling object on top of the world
     def generate_falling_object(self):
@@ -86,11 +90,11 @@ class BeerTrackerWorld:
         size = randint(1, 6)
         x = randint(1, self.max_x - (size-1))
 
-        return BeerTrackerObject(x, 1, size)
+        self.falling_object = BeerTrackerObject(x, 1, size)
 
     # Check if tracker is capable of catching falling object
     def is_capturable(self):
-        return self.tracker.size <= self.falling_object.size
+        return self.tracker.size >= self.falling_object.size
 
     # Check if falling object and tracker is vertically level
     def is_tracker_and_falling_object_vertically_level(self):
@@ -99,15 +103,9 @@ class BeerTrackerWorld:
     # Move falling object to ground
     def pull_falling_object(self):
         self.falling_object.fall_to_ground()
-        tracker_result = self.get_tracker_result()
 
     def increment_falling_object(self):
         self.falling_object.increment_fall()
-
-        if self.falling_object.y == self.tracker.y:
-            tracker_result = self.get_tracker_result()
-        else:
-            tracker_result = TrackerResult.UNAVAILABLE
 
     # Move tracker, units are either negative or positive
     def move_tracker_horizontally(self, units):
@@ -147,9 +145,11 @@ class BeerTrackerWorld:
         intersecting_units = tracker_unpacked.intersection(falling_object_unpacked)
 
         # Set sensor values for intersecting units
+        tracker_unpacked = self.tracker.get_unpacked()
         sensor_values = [0 for _ in xrange(self.tracker.size)]
-        for unit in intersecting_units:
-            sensor_values[unit - self.tracker.x] = 1
+        for i in xrange(len(tracker_unpacked)):
+            if tracker_unpacked[i] in intersecting_units:
+                sensor_values[i] = 1
 
         return sensor_values
 

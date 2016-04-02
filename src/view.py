@@ -12,8 +12,10 @@ from flatland.fitness_flatland_agent import FitnessFlatlandAgent
 from flatland.genotype_neural_network_weights import GenotypeNeuralNetworkWeights
 from beer_tracker.genotype_ctrnn import GenotypeCTRNNWeights
 from beer_tracker.fitness_beer_tracker_agent import FitnessBeerTrackerAgent
+from beer_tracker.beer_tracker_view import BeerTrackerView
 from plot_evolution import PlotEvolution
 from flatland.flatland_view import FlatlandView
+
 
 
 class View(Tk):
@@ -53,7 +55,7 @@ class View(Tk):
         self.tournament_random_choice_rate = DoubleVar(self, EA.tournament_random_choice_rate)
         self.boltzmann_temperature = IntVar(self, EA.boltzmann_temperature)
         self.maximum_generations = IntVar(self, EA.maximum_generations)
-        self.problem_selected = IntVar(self, 5)
+        self.problem_selected = IntVar(self, 6)
         self.one_max_length = IntVar(self, 100)
         self.one_max_random = IntVar(self, 1)
         self.lolz_prefix_z = IntVar(self, 4)
@@ -69,6 +71,9 @@ class View(Tk):
         self.flatland_num_scenarios = IntVar(self, FitnessFlatlandAgent.number_of_scenarios)
         self.flatland_dynamic_scenarios = IntVar(self, int(FitnessFlatlandAgent.dynamic_scenarios))
         self.flatland_time_steps = IntVar(self, FitnessFlatlandAgent.max_time_steps)
+        self.beer_tracker_world_wrap = IntVar(self, int(FitnessBeerTrackerAgent.world_wrap))
+        self.beer_tracker_pulling = IntVar(self, int(FitnessBeerTrackerAgent.pulling))
+
 
         # Create GUI Elements
         Label(self, text="EA General Settings").grid(row=0, columnspan=6, pady=20)
@@ -176,12 +181,12 @@ class View(Tk):
         Checkbutton(self, text="Dynamic", variable=self.flatland_dynamic_scenarios,
                     onvalue=1, offvalue=0, height=2, width=20).grid(row=17, column=5)
 
-        Label(self, text="Beer Tracker Settings").grid(row=17, column=0, pady=12)
+        Label(self, text="Beer Tracker Settings").grid(row=18, column=0, pady=12)
 
         Checkbutton(self, text="Pulling", variable=self.beer_tracker_pulling,
-                    onvalue=1, offvalue=0, height=2, width=20).grid(row=18, column=1)
-        Checkbutton(self, text="Wrap", variable=self.beer_tracker_world_wrap,
                     onvalue=1, offvalue=0, height=2, width=20).grid(row=18, column=2)
+        Checkbutton(self, text="Wrap", variable=self.beer_tracker_world_wrap,
+                    onvalue=1, offvalue=0, height=2, width=20).grid(row=18, column=3)
 
         Label(self, text="Runtime Configurations").grid(row=19, columnspan=6, pady=20)
 
@@ -242,36 +247,46 @@ class View(Tk):
                 self.fitness_classes[5].max_time_steps = self.flatland_time_steps.get()
                 self.fitness_classes[5].number_of_scenarios = self.flatland_num_scenarios.get()
                 self.fitness_classes[5].dynamic_scenarios = bool(self.flatland_dynamic_scenarios.get())
+            elif self.problem_selected.get() == 6:
+                self.fitness_classes[6].pulling = bool(self.beer_tracker_pulling.get())
+                self.fitness_classes[6].world_wrap = bool(self.beer_tracker_world_wrap.get())
+                self.genotype_classes[6].calculate_ctrnn_intervals()
 
             # Report settings and start evolution
             solution = ea.evolve()
             genotype_class.report_genotype_settings()
             ea_config.report()
 
+            # # Plot aggregated data
+            # if self.aggregate_plot_data.get() == 1:
+            #
+            #     PlotEvolution.accumulate_average_data(ea.gen_avg_fitness,
+            #                                           ea.gen_best_fitness,
+            #                                           ea.gen_standard_deviation)
+            #     self.accumulations += 1
+            #
+            #     if self.accumulations == self.accumulation_bound.get():
+            #         PlotEvolution.plot_evolution(PlotEvolution.aggregated_avg_fitness,
+            #                                      PlotEvolution.aggregated_best_fitness,
+            #                                      PlotEvolution.aggregated_standard_deviation)
+            #         self.accumulations = 0
+            #         PlotEvolution.clear_aggregated_data()
+            # else:
+            #
+            #     PlotEvolution.plot_evolution(ea.gen_best_fitness,
+            #                                  ea.gen_best_fitness,
+            #                                  ea.gen_standard_deviation)
 
-            # Plot aggregated data
-            if self.aggregate_plot_data.get() == 1:
-
-                PlotEvolution.accumulate_average_data(ea.gen_avg_fitness,
-                                                      ea.gen_best_fitness,
-                                                      ea.gen_standard_deviation)
-                self.accumulations += 1
-
-                if self.accumulations == self.accumulation_bound.get():
-                    PlotEvolution.plot_evolution(PlotEvolution.aggregated_avg_fitness,
-                                                 PlotEvolution.aggregated_best_fitness,
-                                                 PlotEvolution.aggregated_standard_deviation)
-                    self.accumulations = 0
-                    PlotEvolution.clear_aggregated_data()
-            else:
-
-                PlotEvolution.plot_evolution(ea.gen_best_fitness,
-                                             ea.gen_best_fitness,
-                                             ea.gen_standard_deviation)
-
-            # If flatland, run simulation
+            # If Flatland, run simulation
             if self.problem_selected.get() == 5:
                 view = FlatlandView(fitness_class.flatland_scenarios, solution, self.flatland_time_steps.get())
+                view.after(20, view.agenda_loop())
+                view.mainloop()
+
+            # If Beer Tracker, run simulation
+            if self.problem_selected.get() == 6:
+                view = BeerTrackerView(solution.translate_to_phenotype(), self.beer_tracker_world_wrap.get(),
+                                       self.beer_tracker_pulling.get())
                 view.after(20, view.agenda_loop())
                 view.mainloop()
 

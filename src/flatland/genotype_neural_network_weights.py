@@ -1,5 +1,5 @@
 from genotype import Genotype
-from numpy import random, reshape, array
+from numpy import reshape, array
 from random import uniform, randrange
 from phenotype_neural_network_weights import PhenotypeNeuralNetworkWeights
 

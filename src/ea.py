@@ -17,9 +17,9 @@ class EA:
     # are necessary. But to find a satisfactory combination of 30 parameters, for example, a small population
     # of only 10 or 20 may be sufficient.
 
-    child_pool_size = 70
-    adult_pool_size = 70
-    elitism = 0
+    child_pool_size = 30
+    adult_pool_size = 30
+    elitism = 3
 
     """ The exploration and exploitation coupling """
     # Goldberg and De Jong provide some useful, general, tips for choosing EA parameters. One of the most critical,
@@ -33,7 +33,7 @@ class EA:
     # If the representational choices have been so difficult that no recombination operator can
     # guarantee high heritability, then a low crossover rate, of say 0.2, might be wise.
 
-    crossover_rate = 0.85
+    crossover_rate = 0.75
     crossover_points = 1
 
     """ Mutation rate """
@@ -42,26 +42,26 @@ class EA:
     # (e.g. 5% of all genome components are modified) to .01 per individual (e.g. 1 % of all individuals are mutated
     # in just ONE of their components).
 
-    mutation_rate = 0.65
+    mutation_rate = 0.75
     mutation_scheme = 1  # 1: Single Mutation 2: Component Mutation
 
-    adult_selection_scheme = 3  # 1:Full, 2:Over-production, 3:Mixing
+    adult_selection_scheme = 1  # 1:Full, 2:Over-production, 3:Mixing
     fitness_scaling_scheme = 2  # 0:Fitness-Proportionate, 1:Sigma-Scaling, 2:Tournament, 3:Boltzmann-Scaling
     local_selection_schemes = [2]
 
     """ Boltzmann """
 
-    boltzmann_temperature = 100
+    boltzmann_temperature = 30
 
     """ Tournament """
 
-    tournament_size = 14
+    tournament_size = 9
     tournament_random_choice_rate = 0.35
 
     """ Thresholds """
 
     fitness_threshold = 1
-    maximum_generations = 100
+    maximum_generations = 40
 
     def __init__(self, genotype, fitness, ea_config):
         self.genotype = genotype

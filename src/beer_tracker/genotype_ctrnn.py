@@ -6,15 +6,15 @@ from phenotype_ctrnn import PhenotypeCTRNN
 
 class GenotypeCTRNNWeights(Genotype):
 
-    neuron_count_layers = [5, 2, 2]  # [Input, Hidden 1, Hidden N, Output]
+    neuron_count_layers = [5, 3, 2]  # [Input, Hidden 1, Hidden N, Output]
     ctrnn = True
 
     weight_lower_bound = -5.0
     weight_upper_bound = 5.0
-    time_constant_lower_bound = 1.0
-    time_constant_upper_bound = 2.0
     gain_term_lower_bound = 1.0
     gain_term_upper_bound = 5.0
+    time_constant_lower_bound = 1.0
+    time_constant_upper_bound = 2.0
     bias_weight_lower_bound = -10.0
     bias_weight_upper_bound = 0
 
@@ -90,13 +90,13 @@ class GenotypeCTRNNWeights(Genotype):
             slice_bias_weights_end += cls.nr_bias_weights_layer[i]
 
             # Extract layer weights from bit vector
-            weights = self.bit_vector[slice_weights_start:slice_weights_end]
+            normal_weights = self.bit_vector[slice_weights_start:slice_weights_end]
             bias_weights = self.bit_vector[slice_bias_weights_start:slice_bias_weights_end]
-            layer_weights = array(weights + bias_weights)
+            layer_weights = array(normal_weights + bias_weights)
 
             # Calculate number of layer inputs (downstream + recurrent + bias)
-            nr_layer_inputs = cls.neuron_count_layers[i-1] + cls.neuron_count_layers[i] + 1
-            nr_layer_neurons = cls.neuron_count_layers[i]
+            nr_layer_inputs = cls.neuron_count_layers[i] + cls.neuron_count_layers[i+1] + 1
+            nr_layer_neurons = cls.neuron_count_layers[i+1]
 
             weights.append(reshape(layer_weights, (nr_layer_inputs, nr_layer_neurons)))
 
@@ -121,10 +121,9 @@ class GenotypeCTRNNWeights(Genotype):
         bit_vector += [uniform(cls.time_constant_lower_bound, cls.time_constant_upper_bound) for _ in xrange(cls.nr_time_constants)]
         bit_vector += [uniform(cls.bias_weight_lower_bound, cls.bias_weight_upper_bound) for _ in xrange(cls.nr_bias_weights)]
 
-        return bit_vector
+        return GenotypeCTRNNWeights(bit_vector)
 
     @classmethod
-    # TODO: Plug it in to main view and call it when genotype is selected for EA
     def calculate_ctrnn_intervals(cls):
 
         cls.nr_weights = 0

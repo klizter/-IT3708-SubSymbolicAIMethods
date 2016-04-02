@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+from Tkinter import tkinter as tk
 
 
 class PlotEvolution:
@@ -16,6 +19,10 @@ class PlotEvolution:
 
     @classmethod
     def plot_evolution(cls, avg_fitness, best_fitness, standard_deviation):
+
+        top_level = tk.Toplevel()
+        figure = plt.Figure()
+
         plt.figure(figsize=(9, 3), dpi=100)
         plt.ylim(0, 1.0)
         plt.xlim(1, len(avg_fitness))
@@ -26,8 +33,9 @@ class PlotEvolution:
         plt.plot(generations, best_fitness, linewidth=1.5, color="red", linestyle="solid")
         plt.plot(generations, standard_deviation, linewidth=1.5, color="blue", linestyle="solid")
 
-        plt.draw()
-        plt.show()
+        canvas = FigureCanvasTkAgg()
+
+
 
     @classmethod
     # Receives evolution data from each step in aggregated run of EA

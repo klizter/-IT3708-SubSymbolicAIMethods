@@ -10,7 +10,7 @@ class TrackerActions(Enum):
 
 class BeerTrackerAgent:
 
-    def __int__(self, ctrnn):
+    def __init__(self, ctrnn):
         self.ctrnn = ctrnn
         self.max_velocity = 4
 
@@ -23,6 +23,6 @@ class BeerTrackerAgent:
             return [TrackerActions.PULL, 0]
 
         if action_vector[0] > 0.5:
-            return [TrackerActions.MOVE_RIGHT, round(4 / action_vector[1])]
+            return [TrackerActions.MOVE_RIGHT, round(4 * action_vector[1])]
         else:
-            return [TrackerActions.MOVE_LEFT, round(4 / action_vector[1])]
+            return [TrackerActions.MOVE_LEFT, round(4 * action_vector[1])]
