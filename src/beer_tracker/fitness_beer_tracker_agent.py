@@ -107,8 +107,8 @@ class FitnessBeerTrackerAgent(Fitness):
 
         # Scales
         diminisher_scale = 0.05
-        captured_scale = 0.999
-        avoided_scale = 0.001
+        captured_scale = 0.75
+        avoided_scale = 0.25
 
         # Fitness function parameters
         if capturable_objects:
