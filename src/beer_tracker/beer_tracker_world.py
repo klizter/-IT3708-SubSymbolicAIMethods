@@ -1,4 +1,4 @@
-from random import randint
+from random import randint, uniform
 from enum import Enum
 
 
@@ -87,7 +87,11 @@ class BeerTrackerWorld:
     # Generate new falling object on top of the world
     def generate_falling_object(self):
 
-        size = randint(1, 6)
+        roll = uniform(0.0, 1.0)
+        if roll <= 0.3:
+            size = 6
+        else:
+            size = randint(1, 5)
         x = randint(1, self.max_x - (size-1))
 
         self.falling_object = BeerTrackerObject(x, 1, size)

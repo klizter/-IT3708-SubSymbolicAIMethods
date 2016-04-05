@@ -1,0 +1,18 @@
+--------------------------------------------------------------------------------------------
+ Problem ran with the following EA configurations:
+--------------------------------------------------------------------------------------------
+     child pool size:				200
+     adult pool size:				200
+     crossover rate:				0.75
+     crossover points:				1
+     mutation_rate:					0.75
+     adult selection scheme:		full generational replacement
+     fitness scaling scheme:		tournament
+     elitism:						10
+     maximum number of generations:	500
+     tournament size:				40
+     tournament random choice rate:	0.55
+     boltzmann temperature:		30
+
+- Avoids bigger falling objects, but also same sized objects which it should not.
+- Probably enough with 300 generations, as there was not any great increase beyond this point.

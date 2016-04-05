@@ -58,13 +58,14 @@ class FitnessBeerTrackerAgent(Fitness):
                 # Do tracker action
                 if cls.pulling and action[0] is TrackerActions.PULL:
                     world.pull_falling_object()
-                elif action[0] is TrackerActions.MOVE_RIGHT:
-                    world.move_tracker_horizontally(action[1])
-                elif action[0] is TrackerActions.MOVE_LEFT:
-                    world.move_tracker_horizontally(-action[1])
+                else:
+                    if action[0] is TrackerActions.MOVE_RIGHT:
+                        world.move_tracker_horizontally(action[1])
+                    elif action[0] is TrackerActions.MOVE_LEFT:
+                        world.move_tracker_horizontally(-action[1])
 
-                # Increment fall of falling object
-                world.increment_falling_object()
+                    # Increment fall of falling object
+                    world.increment_falling_object()
 
                 # If tracker and falling object is at same Y coordinate check result
                 if world.is_tracker_and_falling_object_vertically_level():
@@ -107,8 +108,8 @@ class FitnessBeerTrackerAgent(Fitness):
 
         # Scales
         diminisher_scale = 0.05
-        captured_scale = 0.75
-        avoided_scale = 0.25
+        captured_scale = 0.5
+        avoided_scale = 0.5
 
         # Fitness function parameters
         if capturable_objects:
@@ -121,6 +122,7 @@ class FitnessBeerTrackerAgent(Fitness):
         else:
             avoided_score = 0
 
-        neither_diminisher = 1 + (neither_avoided_nor_captured * diminisher_scale)
+        # neither_diminisher = 1 + (neither_avoided_nor_captured * diminisher_scale)
+        neither_diminisher = 1
 
         return ((captured_score * captured_scale) + (avoided_score * avoided_scale)) / neither_diminisher

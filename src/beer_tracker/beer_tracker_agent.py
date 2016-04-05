@@ -19,7 +19,7 @@ class BeerTrackerAgent:
         action_vector = self.ctrnn.process(array(sensor_values))
         action_vector = action_vector.tolist()
 
-        if pulling and action_vector[3] > 0.7:
+        if pulling and action_vector[2] > 0.5:
             return [TrackerActions.PULL, 0]
 
         if action_vector[0] > 0.5:
