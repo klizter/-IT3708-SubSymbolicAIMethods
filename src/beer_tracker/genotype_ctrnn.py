@@ -6,7 +6,7 @@ from phenotype_ctrnn import PhenotypeCTRNN
 
 class GenotypeCTRNNWeights(Genotype):
 
-    neuron_count_layers = [5, 3, 2]  # [Input, Hidden 1, Hidden N, Output]
+    topology = [5, 3, 2]  # [Input, Hidden 1, Hidden N, Output]
     ctrnn = True
 
     weight_lower_bound = -5.0
@@ -95,8 +95,8 @@ class GenotypeCTRNNWeights(Genotype):
             layer_weights = array(normal_weights + bias_weights)
 
             # Calculate number of layer inputs (downstream + recurrent + bias)
-            nr_layer_inputs = cls.neuron_count_layers[i] + cls.neuron_count_layers[i+1] + 1
-            nr_layer_neurons = cls.neuron_count_layers[i+1]
+            nr_layer_inputs = cls.topology[i] + cls.topology[i+1] + 1
+            nr_layer_neurons = cls.topology[i+1]
 
             weights.append(reshape(layer_weights, (nr_layer_inputs, nr_layer_neurons)))
 
@@ -131,33 +131,33 @@ class GenotypeCTRNNWeights(Genotype):
         cls.nr_time_constants = 0
         cls.nr_bias_weights = 0
 
-        for i in xrange(1, len(cls.neuron_count_layers)):
+        for i in xrange(1, len(cls.topology)):
 
             # Calculate number of normal weights between layers
-            nr_weights = cls.neuron_count_layers[i-1]*cls.neuron_count_layers[i]
+            nr_weights = cls.topology[i-1]*cls.topology[i]
             # Number of recurrent weights between neurons in layer
-            nr_weights += cls.neuron_count_layers[i] * cls.neuron_count_layers[i]
+            nr_weights += cls.topology[i] * cls.topology[i]
             # Add weight count to layer total
             cls.nr_weights_layer.append(nr_weights)
             # Add layer total to global total
             cls.nr_weights += nr_weights
 
             # Calculate number of gain terms for each neuron in layer
-            nr_gain_terms = cls.neuron_count_layers[i]
+            nr_gain_terms = cls.topology[i]
             # Add gain term count to layer total
             cls.nr_gain_terms_layer.append(nr_gain_terms)
             # Add layer total to global total
             cls.nr_gain_terms += nr_gain_terms
 
             # Calculate number of time constants for each neuron in layer
-            nr_time_constants = cls.neuron_count_layers[i]
+            nr_time_constants = cls.topology[i]
             # Add time constants count to layer total
             cls.nr_time_constants_layer.append(nr_time_constants)
             # Add layer total to global total
             cls.nr_time_constants += nr_time_constants
 
             # Number of bias weights between bias node and layer
-            nr_bias_weights = cls.neuron_count_layers[i]
+            nr_bias_weights = cls.topology[i]
             # Add bias weight count to layer total
             cls.nr_bias_weights_layer.append(nr_bias_weights)
             # Add layer total to global total

@@ -89,16 +89,16 @@ class BeerTrackerWorld:
 
         roll = uniform(0.0, 1.0)
         if roll <= 0.3:
-            size = 6
+            size = randint(5, 6)
         else:
-            size = randint(1, 5)
+            size = randint(1, 4)
         x = randint(1, self.max_x - (size-1))
 
         self.falling_object = BeerTrackerObject(x, 1, size)
 
     # Check if tracker is capable of catching falling object
     def is_capturable(self):
-        return self.tracker.size >= self.falling_object.size
+        return (self.tracker.size - 1) >= self.falling_object.size
 
     # Check if falling object and tracker is vertically level
     def is_tracker_and_falling_object_vertically_level(self):

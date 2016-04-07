@@ -250,6 +250,17 @@ class View(Tk):
             elif self.problem_selected.get() == 6:
                 self.fitness_classes[6].pulling = bool(self.beer_tracker_pulling.get())
                 self.fitness_classes[6].world_wrap = bool(self.beer_tracker_world_wrap.get())
+
+                # Configure CTRNN for pulling scenario
+                if self.fitness_classes[6].pulling:
+                    self.genotype_classes[6].topology[-1] = 3
+
+                # Configure CTRNN for world wrap scenario
+                if not self.fitness_classes[6].world_wrap:
+                    self.genotype_classes[6].topology[0] = 7
+                    self.genotype_classes[6].weight_lower_bound = -7.0
+                    self.genotype_classes[6].weight_upper_bound = 7.0
+
                 self.genotype_classes[6].calculate_ctrnn_intervals()
 
             # Report settings and start evolution
