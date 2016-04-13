@@ -1,5 +1,5 @@
 from numpy import array
-from enum import Enum
+from libs.enum import Enum
 
 
 class TrackerActions(Enum):

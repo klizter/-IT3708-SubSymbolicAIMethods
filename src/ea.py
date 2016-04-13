@@ -17,9 +17,10 @@ class EA:
     # are necessary. But to find a satisfactory combination of 30 parameters, for example, a small population
     # of only 10 or 20 may be sufficient.
 
-    child_pool_size = 30
-    adult_pool_size = 30
-    elitism = 3
+    child_pool_size = 150
+    adult_pool_size = 150
+    elitism = 8
+    inferiorism = 2
 
     """ The exploration and exploitation coupling """
     # Goldberg and De Jong provide some useful, general, tips for choosing EA parameters. One of the most critical,
@@ -55,7 +56,7 @@ class EA:
 
     """ Tournament """
 
-    tournament_size = 9
+    tournament_size = 30
     tournament_random_choice_rate = 0.35
 
     """ Thresholds """
@@ -85,6 +86,7 @@ class EA:
         EA.adult_selection_scheme = ea_config.adult_selection_scheme
         EA.fitness_scaling_scheme = ea_config.fitness_scaling_scheme
         EA.elitism = ea_config.elitism
+        EA.inferiorism = ea_config.inferiorism
         EA.maximum_generations = ea_config.maximum_generations
         EA.tournament_size = ea_config.tournament_size
         EA.tournament_random_choice_rate = ea_config.tournament_random_choice_rate
@@ -125,6 +127,7 @@ class EA:
             # Check if reached max number of generations
             if self.current_generation == EA.maximum_generations:
                 print "Maximum number of generations (", self.current_generation, ") has been reached!"
+                print "Best solution found was: ", self.child_pool[self.fitness.index_of_best_solution(phenotypes_fitness)]
                 return self.child_pool[self.fitness.index_of_best_solution(phenotypes_fitness)]
 
             # Generate adult pool with selection scheme of choice
@@ -174,6 +177,10 @@ class EA:
             # Elitism
             for i in xrange(EA.elitism):
                 self.child_pool.append(self.adult_pool[i])
+
+            # Inferiorism
+            for i in xrange(EA.inferiorism):
+                self.child_pool.append(self.adult_pool[-i-1])
 
             # Reproduce mating pairs
             for mating_pair in mating_pairs:

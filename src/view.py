@@ -17,7 +17,6 @@ from plot_evolution import PlotEvolution
 from flatland.flatland_view import FlatlandView
 
 
-
 class View(Tk):
 
     def __init__(self, *args, **kwargs):
@@ -51,6 +50,7 @@ class View(Tk):
         self.adult_selection_scheme = IntVar(self, EA.adult_selection_scheme)
         self.parent_selection_scheme = IntVar(self, EA.fitness_scaling_scheme)
         self.elitism = IntVar(self, EA.elitism)
+        self.inferiorism = IntVar(self, EA.inferiorism)
         self.tournament_size = IntVar(self, EA.tournament_size)
         self.tournament_random_choice_rate = DoubleVar(self, EA.tournament_random_choice_rate)
         self.boltzmann_temperature = IntVar(self, EA.boltzmann_temperature)
@@ -117,6 +117,8 @@ class View(Tk):
                     variable=self.parent_selection_scheme, value=3).grid(row=7, column=3)
         Label(self, text="Elitism: ").grid(row=7, column=4)
         Entry(self, textvariable=self.elitism).grid(row=7, column=5)
+        Label(self, text="Inferiorism: ").grid(row=7, column=6)
+        Entry(self, textvariable=self.inferiorism).grid(row=7, column=7)
 
         Label(self, text="Tournament Settings").grid(row=8, column=0, pady=20)
 
@@ -208,7 +210,7 @@ class View(Tk):
 
     def run_ea(self):
         iterations_completed = 0
-        PlotEvolution.x_limit = self.maximum_generations.get()
+        # PlotEvolution.x_limit = self.maximum_generations.get()
         while self.ea_iterations != iterations_completed:
 
             ea_config = EAConfig(self.child_pool_size.get(),
@@ -220,6 +222,7 @@ class View(Tk):
                                  self.adult_selection_scheme.get(),
                                  self.parent_selection_scheme.get(),
                                  self.elitism.get(),
+                                 self.inferiorism.get(),
                                  self.maximum_generations.get(),
                                  self.tournament_size.get(),
                                  self.tournament_random_choice_rate.get(),
@@ -253,13 +256,25 @@ class View(Tk):
 
                 # Configure CTRNN for pulling scenario
                 if self.fitness_classes[6].pulling:
+                    self.genotype_classes[6].topology[1] = 3
                     self.genotype_classes[6].topology[-1] = 3
 
-                # Configure CTRNN for world wrap scenario
+                    # Adjust scale for scenario
+                    self.fitness_classes[6].captured_scale = 0.75
+                    self.fitness_classes[6].avoided_scale = 0.25
+
+                    self.genotype_classes[6].weight_lower_bound = -7.0
+                    self.genotype_classes[6].weight_upper_bound = 7.0
+
+                # Configure CTRNN for no world wrap scenario
                 if not self.fitness_classes[6].world_wrap:
                     self.genotype_classes[6].topology[0] = 7
                     self.genotype_classes[6].weight_lower_bound = -7.0
                     self.genotype_classes[6].weight_upper_bound = 7.0
+
+                    # Adjust scale for scenario
+                    self.fitness_classes[6].captured_scale = 0.9
+                    self.fitness_classes[6].avoided_scale = 0.1
 
                 self.genotype_classes[6].calculate_ctrnn_intervals()
 
@@ -269,24 +284,24 @@ class View(Tk):
             ea_config.report()
 
             # # Plot aggregated data
-            # if self.aggregate_plot_data.get() == 1:
-            #
-            #     PlotEvolution.accumulate_average_data(ea.gen_avg_fitness,
-            #                                           ea.gen_best_fitness,
-            #                                           ea.gen_standard_deviation)
-            #     self.accumulations += 1
-            #
-            #     if self.accumulations == self.accumulation_bound.get():
-            #         PlotEvolution.plot_evolution(PlotEvolution.aggregated_avg_fitness,
-            #                                      PlotEvolution.aggregated_best_fitness,
-            #                                      PlotEvolution.aggregated_standard_deviation)
-            #         self.accumulations = 0
-            #         PlotEvolution.clear_aggregated_data()
-            # else:
-            #
-            #     PlotEvolution.plot_evolution(ea.gen_best_fitness,
-            #                                  ea.gen_best_fitness,
-            #                                  ea.gen_standard_deviation)
+            if self.aggregate_plot_data.get() == 1:
+
+                PlotEvolution.accumulate_average_data(ea.gen_avg_fitness,
+                                                      ea.gen_best_fitness,
+                                                      ea.gen_standard_deviation)
+                self.accumulations += 1
+
+                if self.accumulations == self.accumulation_bound.get():
+                    PlotEvolution.plot_evolution(PlotEvolution.aggregated_avg_fitness,
+                                                 PlotEvolution.aggregated_best_fitness,
+                                                 PlotEvolution.aggregated_standard_deviation)
+                    self.accumulations = 0
+                    PlotEvolution.clear_aggregated_data()
+            else:
+
+                PlotEvolution.plot_evolution(ea.gen_avg_fitness,
+                                             ea.gen_best_fitness,
+                                             ea.gen_standard_deviation)
 
             # If Flatland, run simulation
             if self.problem_selected.get() == 5:

@@ -1,9 +1,11 @@
 from numpy import exp, dot, power, sin
-from enum import Enum
+from libs.enum import Enum
 
 # TODO
 # Add softmax og rectify activation functions
 # Add support for different activation functions for each layer
+
+
 class ActivationScheme(Enum):
     SIGMOID = 1
     GAUSSIAN = 2

@@ -2,34 +2,7 @@ from fitness import Fitness
 from beer_tracker_world import BeerTrackerWorld, TrackerResult
 from beer_tracker_agent import BeerTrackerAgent, TrackerActions
 from ctrnn import ContinuesTimeRecurrentNeuralNetwork
-from multiprocessing import Process, Pipe
-from itertools import izip
-import copy_reg
-import types
-
-
-def _pickle_method(m):
-    if m.im_self is None:
-        return getattr, (m.im_class, m.im_func.func_name)
-    else:
-        return getattr, (m.im_self, m.im_func.func_name)
-
-copy_reg.pickle(types.MethodType, _pickle_method)
-
-
-def spawn(f):
-        def fun(pipe,x):
-            pipe.send(f(x))
-            pipe.close()
-        return fun
-
-
-def parmap(f,X):
-    pipe=[Pipe() for x in X]
-    proc=[Process(target=spawn(f),args=(c,x)) for x,(p,c) in izip(X,pipe)]
-    [p.start() for p in proc]
-    [p.join() for p in proc]
-    return [p.recv() for (p,c) in pipe]
+from libs.multiprocess import parmap
 
 
 class FitnessBeerTrackerAgent(Fitness):
@@ -38,6 +11,13 @@ class FitnessBeerTrackerAgent(Fitness):
     world_wrap = True
     agent_start_position = 5
     pulling = False
+    diminisher_scale = 2
+    captured_scale = 0.5
+    avoided_scale = 0.5
+    bad_pull_weight = 0.5
+
+    generation_max_captured = 0
+
 
     @classmethod
     def evaluate_fitness_of_phenotype(cls, phenotype):
@@ -49,17 +29,18 @@ class FitnessBeerTrackerAgent(Fitness):
         agent = BeerTrackerAgent(ctrnn)
         world = BeerTrackerWorld(cls.agent_start_position, 15, 30, cls.world_wrap)
 
-        # Tracker stats
+        # Tracker scenario stats
         avoided_objects = 0
         captured_objects = 0
         neither_avoided_nor_caputured = 0
-
         capturable_objects = 0
         total_objects = 0
+        bad_pull = 0
 
         # World state
         current_time_step = 1
         objects_level = False
+        object_pulled = False
 
         # Run agent through world scenario
         while current_time_step < cls.time_steps:
@@ -68,6 +49,7 @@ class FitnessBeerTrackerAgent(Fitness):
             if objects_level:
                 world.generate_falling_object()
                 objects_level = False
+                object_pulled = False
 
             # Get tracker shadow sensors reading
             sensor_readings = world.get_tracker_shadow_sensors_reading()
@@ -82,6 +64,7 @@ class FitnessBeerTrackerAgent(Fitness):
             # Do tracker action
             if cls.pulling and action[0] is TrackerActions.PULL:
                 world.pull_falling_object()
+                object_pulled = True
             else:
                 if action[0] is TrackerActions.MOVE_RIGHT:
                     world.move_tracker_horizontally(action[1])
@@ -115,22 +98,28 @@ class FitnessBeerTrackerAgent(Fitness):
                     captured_objects += 1
                 elif result == TrackerResult.NEITHER:
                     neither_avoided_nor_caputured += 1
+                    if object_pulled:
+                        bad_pull += 1
 
             current_time_step += 1
 
-        # Evaluate fitness of agent and add it to collection
-        return cls.fitness_function(captured_objects, avoided_objects, capturable_objects,
-                                    total_objects - capturable_objects, neither_avoided_nor_caputured)
+        # Evaluate fitness
+        phenotype_fitness = cls.fitness_function(captured_objects, avoided_objects, capturable_objects,
+                                                 total_objects - capturable_objects)
+
+        # If pulling return captured total also
+        if cls.pulling:
+
+            # Return both total captured and fitness
+            return [float(captured_objects) - float(bad_pull), phenotype_fitness]
+
+        # Return fitness
+        return phenotype_fitness
 
     @classmethod
-    def fitness_function(cls, captured_objects, avoided_objects, capturable_objects, avoidable_objects, neither_avoided_nor_captured):
+    def fitness_function(cls, captured_objects, avoided_objects, capturable_objects, avoidable_objects):
 
-        # Scales
-        diminisher_scale = 0.05
-        captured_scale = 0.5
-        avoided_scale = 0.5
-
-        # Fitness function parameters
+        # Evaluate fitness function parameters
         if capturable_objects:
             captured_score = captured_objects / float(capturable_objects)
         else:
@@ -141,12 +130,33 @@ class FitnessBeerTrackerAgent(Fitness):
         else:
             avoided_score = 0
 
-        # neither_diminisher = 1 + (neither_avoided_nor_captured * diminisher_scale)
-        neither_diminisher = 1
-
-        return ((captured_score * captured_scale) + (avoided_score * avoided_scale)) / neither_diminisher
+        # Return fitness of phenotype based on scales
+        return (captured_score * cls.captured_scale) + (avoided_score * cls.avoided_scale)
 
     @classmethod
     def evaluate_fitness_of_phenotypes(cls, phenotypes):
-        result = parmap(cls.evaluate_fitness_of_phenotype, phenotypes)
-        return result
+
+        if cls.pulling:
+            cls.generation_max_captured = 0
+
+        fitness_phenotypes = parmap(cls.evaluate_fitness_of_phenotype, phenotypes)
+
+        if cls.pulling:
+            fitness_phenotypes = cls.apply_pulling_scale(fitness_phenotypes)
+
+        return fitness_phenotypes
+
+
+    @classmethod
+    def apply_pulling_scale(cls, fitness_phenotypes):
+        max_captured = 0
+
+        for i in xrange (len(fitness_phenotypes)):
+            if max_captured < fitness_phenotypes[i][0]:
+                max_captured = fitness_phenotypes[i][0]
+
+        for i in xrange(len(fitness_phenotypes)):
+            fitness_phenotypes[i][1] *= ((fitness_phenotypes[i][0] + 1) / (max_captured + 1))
+            fitness_phenotypes[i] = fitness_phenotypes[i][1]
+
+        return fitness_phenotypes

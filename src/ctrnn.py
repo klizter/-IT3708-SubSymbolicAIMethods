@@ -1,5 +1,5 @@
 from numpy import exp, dot, power, sin, concatenate, array
-from enum import Enum
+from libs.enum import Enum
 
 
 class ActivationScheme(Enum):
@@ -25,12 +25,15 @@ class ContinuesTimeRecurrentNeuralNetwork:
             # Add recurrent and bias signals to downstream iff CTRNN layer
             if layer.is_continues_time_recurrent():
 
+                # Extract CTRNN recurrent state and apply gain_term
                 recurrent_signals = []
                 for neuron in layer.neurons:
                     recurrent_signals.append(neuron.memory*neuron.gain_term)
 
-                # Add recurrent signals and bias signal to downstream signals
+                # Generate recurrent signals by applying logistic function
                 recurrent_signals_array = NeuronLayer.logistic(array(recurrent_signals))
+
+                # Add recurrent signals and bias signal to downstream
                 downstream_signals = concatenate([downstream_signals, recurrent_signals_array])
                 downstream_signals = concatenate([downstream_signals, [1.0]])
 

@@ -1,5 +1,5 @@
 from random import randrange
-from enum import Enum
+from libs.enum import Enum
 
 
 class Direction(Enum):

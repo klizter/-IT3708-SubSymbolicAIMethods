@@ -1,4 +1,4 @@
-from beer_tracker_world import BeerTrackerWorld
+from beer_tracker_world import BeerTrackerWorld, TrackerResult
 from beer_tracker_agent import BeerTrackerAgent, TrackerActions
 from genotype_ctrnn import GenotypeCTRNNWeights
 from fitness_beer_tracker_agent import FitnessBeerTrackerAgent
@@ -28,6 +28,7 @@ class BeerTrackerView(Tk):
         self.objects_level = False
         self.world_wrap = world_wrap
         self.pulling = pulling
+        self.tracker_catch = False
 
         self.unit_dimensions = [60, 60]
         self.canvas = Canvas(self, width=BeerTrackerView.viewport_width, height=BeerTrackerView.viewport_height,
@@ -36,7 +37,9 @@ class BeerTrackerView(Tk):
         self.draw_tracker()
         self.draw_falling_object()
         self.draw_canvas_lines()
-        GenotypeCTRNNWeights.calculate_ctrnn_intervals()
+
+        # GenotypeCTRNNWeights.topology
+        # GenotypeCTRNNWeights.calculate_ctrnn_intervals()
 
     def draw_canvas_lines(self):
         for i in xrange(1, 30):
@@ -49,23 +52,35 @@ class BeerTrackerView(Tk):
             self.canvas.create_line(0, 30*i, self.__class__.viewport_width, 30*i)
 
     def draw_tracker(self):
+        cls = self.__class__
         tracker_units = self.world.get_tracker_units()
+
+        fill_color = cls.colors[3]
+        if self.tracker_catch:
+            fill_color = cls.colors[4]
+
         for i in xrange(len(tracker_units[0])):
             self.canvas.create_rectangle((tracker_units[0][i]-1)*30,
                                          (tracker_units[1]-1)*30,
                                          (tracker_units[0][i]-1)*30+30,
                                          (tracker_units[1]-1)*30+30,
-                                         fill="#6699cc", outline="#000000", tags="dynamic")
+                                         fill=fill_color, outline="#000000", tags="dynamic")
 
     def draw_falling_object(self):
         cls = self.__class__
+
         falling_object_edge_units = self.world.get_falling_object_units()
+
+        fill_color = cls.colors[5]
+        if len(falling_object_edge_units[0]) < 5:
+            fill_color = cls.colors[1]
+
         for i in xrange(len(falling_object_edge_units[0])):
             self.canvas.create_rectangle((falling_object_edge_units[0][i]-1)*30,
                                          (falling_object_edge_units[1]-1)*30,
                                          (falling_object_edge_units[0][i]-1)*30+30,
                                          (falling_object_edge_units[1]-1)*30+30,
-                                         fill=cls.colors[1], outline="#000000", tags="dynamic")
+                                         fill=fill_color, outline="#000000", tags="dynamic")
 
     def run_time_step(self):
         self.time_steps += 1
@@ -88,36 +103,25 @@ class BeerTrackerView(Tk):
         # Do tracker action
         if self.pulling and action[0] is TrackerActions.PULL:
             self.world.pull_falling_object()
-        elif action[0] is TrackerActions.MOVE_RIGHT:
-            self.world.move_tracker_horizontally(action[1])
-        elif action[0] is TrackerActions.MOVE_LEFT:
-            self.world.move_tracker_horizontally(-action[1])
+        else:
+            if action[0] is TrackerActions.MOVE_RIGHT:
+                self.world.move_tracker_horizontally(action[1])
+            elif action[0] is TrackerActions.MOVE_LEFT:
+                self.world.move_tracker_horizontally(-action[1])
 
-        # Increment fall of falling object
-        self.world.increment_falling_object()
+            # Increment fall of falling object
+            self.world.increment_falling_object()
 
         # If tracker and falling object is at same Y coordinate check result
         if self.world.is_tracker_and_falling_object_vertically_level():
 
-            # Keep track of all falling objects residing on tracker level
-            #total_objects += 1
             self.objects_level = True
 
-            # Set capturable condition
-            capturable = self.world.is_capturable()
-
-            # Keep tracker of how many capturable objects in world scenario
-            # if capturable:
-            #     capturable_objects += 1
-
-            # Get tracker result
-            print self.world.get_tracker_result()
-
-            # Check tracker result and update stats
-            # if result == TrackerResult.AVOIDED and capturable is False:
-            #     avoided_objects += 1
-            # elif result == TrackerResult.CAPTURED and capturable is True:
-            #     captured_objects += 1
+            result = self.world.get_tracker_result()
+            if result == TrackerResult.CAPTURED:
+                self.tracker_catch = True
+        else:
+            self.tracker_catch = False
 
         self.after(100, self.run_time_step)
 
@@ -132,7 +136,7 @@ class BeerTrackerView(Tk):
             self.first_draw = False
 
         # Draw tracker and falling object
-        self.draw_tracker()
         self.draw_falling_object()
+        self.draw_tracker()
 
         self.after(20, self.agenda_loop)

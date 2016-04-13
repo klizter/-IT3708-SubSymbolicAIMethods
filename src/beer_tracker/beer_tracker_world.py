@@ -1,5 +1,5 @@
 from random import randint, uniform
-from enum import Enum
+from libs.enum import Enum
 
 
 class TrackerResult(Enum):

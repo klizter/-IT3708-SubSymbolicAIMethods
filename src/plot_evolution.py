@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib
 matplotlib.use("TkAgg")
-from matplotlib import pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
-from Tkinter import tkinter as tk
+import Tkinter
 
+# Uses matplotlib to display graphs in a tkinter top level (popup)
+# http://www.labri.fr/perso/nrougier/teaching/matplotlib/
 
 class PlotEvolution:
 
@@ -13,6 +14,7 @@ class PlotEvolution:
     aggregated_avg_fitness = []
     aggregated_best_fitness = []
     aggregated_standard_deviation = []
+    font = {'fontname': 'Calibri'}
 
     def __init__(self):
         pass
@@ -20,22 +22,31 @@ class PlotEvolution:
     @classmethod
     def plot_evolution(cls, avg_fitness, best_fitness, standard_deviation):
 
-        top_level = tk.Toplevel()
-        figure = plt.Figure()
-
-        plt.figure(figsize=(9, 3), dpi=100)
-        plt.ylim(0, 1.0)
-        plt.xlim(1, len(avg_fitness))
+        top_level = Tkinter.Toplevel()
+        figure = Figure(figsize=(9, 3), dpi=100)
+        ax = figure.add_subplot(111)
+        ax.set_ylim([0, 1.0])
+        ax.set_ylabel("Fitness")
+        ax.set_xlabel("Generations")
 
         generations = np.linspace(1, len(avg_fitness), len(avg_fitness), endpoint=True)
 
-        plt.plot(generations, avg_fitness, linewidth=1.5, color="green", linestyle="solid")
-        plt.plot(generations, best_fitness, linewidth=1.5, color="red", linestyle="solid")
-        plt.plot(generations, standard_deviation, linewidth=1.5, color="blue", linestyle="solid")
+        ax.plot(generations, best_fitness, linewidth=1.5, color="red", linestyle="solid", label="Best")
+        ax.plot(generations, avg_fitness, linewidth=1.5, color="green", linestyle="solid", label="Average")
+        ax.plot(generations, standard_deviation, linewidth=1.5, color="blue", linestyle="solid", label="Deviation")
+        ax.legend(loc='upper left', numpoints=1, prop={'size': 10})
 
-        canvas = FigureCanvasTkAgg()
+        canvas = FigureCanvasTkAgg(figure, master=top_level)
+        canvas.show()
+        canvas.get_tk_widget().grid(row=0)
 
+        toolbar = NavigationToolbar2TkAgg(canvas, top_level)
+        toolbar.grid(row=1, sticky=Tkinter.W)
+        toolbar.update()
 
+        figure.tight_layout()
+
+        top_level.mainloop()
 
     @classmethod
     # Receives evolution data from each step in aggregated run of EA
@@ -76,7 +87,3 @@ class PlotEvolution:
                 cls.aggregated_standard_deviation[i] = ((cls.aggregated_standard_deviation[i] + gen_standard_deviation[i]) / 2)
             else:
                 cls.aggregated_standard_deviation.append(gen_standard_deviation[i])
-
-
-
-

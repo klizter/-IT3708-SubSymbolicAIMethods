@@ -3,8 +3,9 @@
 class EAConfig:
 
     def __init__(self, child_pool_size, adult_pool_size, crossover_rate, crossover_points, mutation_scheme,
-                 mutation_rate, adult_selection_scheme, fitness_scaling_scheme, elitism, maximum_generations,
+                 mutation_rate, adult_selection_scheme, fitness_scaling_scheme, elitism, inferiorism, maximum_generations,
                  tournament_size, tournament_random_choice_rate, boltzmann_temperature):
+
         self.child_pool_size = child_pool_size
         self.adult_pool_size = adult_pool_size
         self.crossover_rate = crossover_rate
@@ -14,6 +15,7 @@ class EAConfig:
         self.adult_selection_scheme = adult_selection_scheme
         self.fitness_scaling_scheme = fitness_scaling_scheme
         self.elitism = elitism
+        self.inferiorism = inferiorism
         self.maximum_generations = maximum_generations
         self.tournament_size = tournament_size
         self.tournament_random_choice_rate = tournament_random_choice_rate
@@ -40,6 +42,7 @@ class EAConfig:
         print "     adult selection scheme:\t\t", self.names_ass[self.adult_selection_scheme]
         print "     fitness scaling scheme:\t\t", self.names_pss[self.fitness_scaling_scheme]
         print "     elitism:\t\t\t\t\t\t", self.elitism
+        print "     inferiorism:\t\t\t\t\t", self.inferiorism
         print "     maximum number of generations:\t", self.maximum_generations
         print "     tournament size:\t\t\t\t", self.tournament_size
         print "     tournament random choice rate:\t", self.tournament_random_choice_rate
