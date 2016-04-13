@@ -11,12 +11,8 @@ class FitnessBeerTrackerAgent(Fitness):
     world_wrap = True
     agent_start_position = 5
     pulling = False
-    diminisher_scale = 2
     captured_scale = 0.5
     avoided_scale = 0.5
-    bad_pull_weight = 0.5
-
-    generation_max_captured = 0
 
 
     @classmethod
@@ -32,10 +28,9 @@ class FitnessBeerTrackerAgent(Fitness):
         # Tracker scenario stats
         avoided_objects = 0
         captured_objects = 0
-        neither_avoided_nor_caputured = 0
+        pull_captured = 0
         capturable_objects = 0
         total_objects = 0
-        bad_pull = 0
 
         # World state
         current_time_step = 1
@@ -96,10 +91,8 @@ class FitnessBeerTrackerAgent(Fitness):
                     avoided_objects += 1
                 elif result == TrackerResult.CAPTURED and capturable is True:
                     captured_objects += 1
-                elif result == TrackerResult.NEITHER:
-                    neither_avoided_nor_caputured += 1
                     if object_pulled:
-                        bad_pull += 1
+                        pull_captured += 1
 
             current_time_step += 1
 
@@ -111,10 +104,17 @@ class FitnessBeerTrackerAgent(Fitness):
         if cls.pulling:
 
             # Return both total captured and fitness
-            return [float(captured_objects) - float(bad_pull), phenotype_fitness]
+            return cls.pull_fitness_function(phenotype_fitness, pull_captured, capturable_objects)
 
         # Return fitness
         return phenotype_fitness
+
+    @classmethod
+    def pull_fitness_function(cls, fitness, pull_captured, capturable_objects):
+        pull_reward = 0
+        if pull_captured > 0:
+            pull_reward = 0.25
+        return (fitness * 0.5) + ((pull_captured / capturable_objects) * 0.25) + pull_reward
 
     @classmethod
     def fitness_function(cls, captured_objects, avoided_objects, capturable_objects, avoidable_objects):
@@ -135,28 +135,5 @@ class FitnessBeerTrackerAgent(Fitness):
 
     @classmethod
     def evaluate_fitness_of_phenotypes(cls, phenotypes):
-
-        if cls.pulling:
-            cls.generation_max_captured = 0
-
         fitness_phenotypes = parmap(cls.evaluate_fitness_of_phenotype, phenotypes)
-
-        if cls.pulling:
-            fitness_phenotypes = cls.apply_pulling_scale(fitness_phenotypes)
-
-        return fitness_phenotypes
-
-
-    @classmethod
-    def apply_pulling_scale(cls, fitness_phenotypes):
-        max_captured = 0
-
-        for i in xrange (len(fitness_phenotypes)):
-            if max_captured < fitness_phenotypes[i][0]:
-                max_captured = fitness_phenotypes[i][0]
-
-        for i in xrange(len(fitness_phenotypes)):
-            fitness_phenotypes[i][1] *= ((fitness_phenotypes[i][0] + 1) / (max_captured + 1))
-            fitness_phenotypes[i] = fitness_phenotypes[i][1]
-
         return fitness_phenotypes

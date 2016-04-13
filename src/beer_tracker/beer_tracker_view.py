@@ -20,6 +20,10 @@ class BeerTrackerView(Tk):
         self.ctrnn = ContinuesTimeRecurrentNeuralNetwork.construct_ctrnn(phenotype.layer_weights,
                                                                          phenotype.gain_terms,
                                                                          phenotype.time_constants)
+        print phenotype.layer_weights
+        print phenotype.gain_terms
+        print phenotype.time_constants
+
         self.agent = BeerTrackerAgent(self.ctrnn)
         self.objects_level = False
 
